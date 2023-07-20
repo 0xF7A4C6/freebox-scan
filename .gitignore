@@ -20,4 +20,6 @@
 # Go workspace file
 go.work
 
-*.txt
+found_pannel.txt
+hit.txt
+list.txt
