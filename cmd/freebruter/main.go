@@ -2,19 +2,27 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net"
+	"net/http"
+	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/0xF7A4C6/freebruter/internal/console"
 	"github.com/0xF7A4C6/freebruter/internal/freebox"
 	"github.com/0xF7A4C6/freebruter/internal/utils"
 	"github.com/korylprince/ipnetgen"
-	"github.com/valyala/fasthttp"
 	"github.com/zenthangplus/goccm"
 )
 
+const (
+	FreeboxOSIdentification = "Freebox OS :: Identification"
+)
+
 var (
+	ports                       = []int{80}
 	checked, found, hit, errors int
 )
 
@@ -46,65 +54,110 @@ func testUrl(url string) {
 }
 
 func IsFreebox(ip string) {
-	ports := []int{80, 443, 8080, 8081, 81, 50000, 8888, 8181}
-
-	for _, port := range ports {
-		timeout := time.Millisecond*500
-		conn, err := net.DialTimeout("tcp", net.JoinHostPort(ip, fmt.Sprintf("%d", port)), timeout)
-
-		if err != nil {
-			errors++
-			continue
-		}
-
-		conn.Close()
-
-		u := fmt.Sprintf("http://%s", net.JoinHostPort(ip, fmt.Sprintf("%d", port)))
-
-		req := fasthttp.AcquireRequest()
-		req.SetRequestURI(u)
-		req.Header.SetMethod("GET")
-
-		resp := fasthttp.AcquireResponse()
-		err = fasthttp.DoRedirects(req, resp, 3)
-		if err != nil {
-			continue
-		}
-
-		body := string(resp.Body())
-		title := ""
-
-		if strings.Contains(body, "<title>") {
-			title = strings.ReplaceAll(strings.Split(strings.Split(body, "<title>")[1], "</title>")[0], "\n", "")
-		}
-
-		if title != "Freebox OS :: Identification" {
-			console.Log(fmt.Sprintf("[NOP] [%d] %s (%s)", resp.StatusCode(), strings.ReplaceAll(req.URI().String(), "\n", ""), title))
-			continue
-		}
-
-		console.Log(fmt.Sprintf("[HIT] [%d] %s (%s)", resp.StatusCode(), strings.ReplaceAll(req.URI().String(), "\n", ""), title))
-		utils.AppendFile("found_pannel.txt", req.URI().String())
-
-		hit++
-		if strings.Contains(req.URI().String(), "freeboxos") {
-			go testUrl(strings.Split(req.URI().String(), "/login.php")[0])
-		}
-
-		break
+	type Result struct {
+		URI    string
+		Status int
+		Title  string
 	}
 
-}
+	results := make(chan Result, len(ports))
+	var wg sync.WaitGroup
 
+	for _, port := range ports {
+		wg.Add(1)
+
+		go func(ip string, port int) {
+			defer wg.Done()
+
+			timeout := time.Millisecond * 400
+			conn, err := net.DialTimeout("tcp", net.JoinHostPort(ip, fmt.Sprintf("%d", port)), timeout)
+			if err != nil {
+				errors++
+				return
+			}
+			conn.Close()
+
+			u := fmt.Sprintf("http://%s", net.JoinHostPort(ip, fmt.Sprintf("%d", port)))
+			req, err := http.NewRequest("GET", u, nil)
+			if err != nil {
+				errors++
+				return
+			}
+
+			client := &http.Client{
+				Timeout: time.Second,
+			}
+
+			resp, err := client.Do(req)
+			if err != nil {
+				errors++
+				return
+			}
+			defer resp.Body.Close()
+
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				errors++
+				return
+			}
+
+			title := ""
+			re := regexp.MustCompile(`<title>(.*?)</title>`)
+			match := re.FindStringSubmatch(string(body))
+			if len(match) > 1 {
+				title = strings.ReplaceAll(strings.TrimSpace(match[1]), "\n", "")
+			}
+
+			results <- Result{
+				URI:    resp.Request.URL.String(),
+				Status: resp.StatusCode,
+				Title:  title,
+			}
+		}(ip, port)
+	}
+
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	for result := range results {
+		if result.Title != FreeboxOSIdentification {
+			console.Log(fmt.Sprintf("[NOP] [%d] %s (%s)", result.Status, strings.ReplaceAll(result.URI, "\n", ""), result.Title))
+			continue
+		}
+
+		console.Log(fmt.Sprintf("[HIT] [%d] %s (%s)", result.Status, strings.ReplaceAll(result.URI, "\n", ""), result.Title))
+		utils.AppendFile("found_pannel.txt", result.URI)
+
+		if strings.Contains(result.URI, "freeboxos") {
+			go testUrl(strings.Split(result.URI, "/login.php")[0])
+		}
+		hit++
+		break
+	}
+}
 func titleThread() {
+	startTime := time.Now()
+
 	for {
 		time.Sleep(time.Millisecond)
-		console.SetTitle(fmt.Sprintf("checked: %d, found: %d, hit: %d, error: %d", checked, found, hit, errors))
+		
+		elapsedMinutes := int(time.Since(startTime).Seconds())
+		
+		checkedCPM := 0
+		if elapsedMinutes > 0 {
+			checkedCPM = checked / elapsedMinutes
+		} else {
+			checkedCPM = checked
+		}
+
+		console.SetTitle(fmt.Sprintf("checked: %d, found: %d, hit: %d, error: %d, CPS: %d, CPM: %d", checked, found, hit, errors, checkedCPM, checkedCPM*60))
 	}
 }
 
 func main() {
-	threads := goccm.New(3000)
+	threads := goccm.New(2000)
 	go titleThread()
 
 	cidr, err := utils.ReadFile("asn.txt")
@@ -118,6 +171,7 @@ func main() {
 			panic(err)
 		}
 
+		fmt.Println(subnet)
 		for ip := gen.Next(); ip != nil; ip = gen.Next() {
 			threads.Wait()
 
