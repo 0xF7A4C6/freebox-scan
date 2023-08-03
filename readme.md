@@ -1,7 +1,7 @@
-# 📃 FreeBox Scanner Documentation
+# FreeBox Scanner Documentation
 
 ## Table of Contents
-- [📃 FreeBox Scanner Documentation](#-freebox-scanner-documentation)
+- [FreeBox Scanner Documentation](#freebox-scanner-documentation)
 	- [Table of Contents](#table-of-contents)
 	- [Introduction](#introduction)
 	- [Usage](#usage)
