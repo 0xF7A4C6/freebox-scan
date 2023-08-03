@@ -1,7 +1,7 @@
-# FreeBox Scanner Documentation
+# 📃 FreeBox Scanner Documentation
 
 ## Table of Contents
-- [FreeBox Scanner Documentation](#freebox-scanner-documentation)
+- [📃 FreeBox Scanner Documentation](#-freebox-scanner-documentation)
 	- [Table of Contents](#table-of-contents)
 	- [Introduction](#introduction)
 	- [Usage](#usage)
@@ -9,6 +9,8 @@
 	- [Installation](#installation)
 	- [Troubleshooting](#troubleshooting)
 	- [Responsible Use](#responsible-use)
+	- [Free SAS CIDR range list](#free-sas-cidr-range-list)
+	- [See PoC on Youtube](#see-poc-on-youtube)
 
 ## Introduction
 The Freebox Port Scanner and Exploiter is a powerful tool designed to scan for Freebox routers on a network and identify those with open ports susceptible to exploitation. The Freebox is a popular router model used in many homes and offices, and while it provides essential networking features, it may have certain vulnerabilities that can be exploited if not properly secured.
@@ -50,9 +52,9 @@ Remember, the goal is not to cause harm but to raise awareness about potential s
 
 Proceed with caution, act responsibly, and prioritize the security and privacy of others while using this tool.
 
-```txt
-Free CIDR:
+## Free SAS CIDR range list
 
+```txt
 88.176.0.0/12	Free SAS	France cidr France,Limeil-Brevannes
 91.160.0.0/12	Free SAS	France cidr France,Saint-Médard-en-Jalles
 82.248.0.0/13	Free SAS	France cidr France,Courbevoie
@@ -74,5 +76,7 @@ Free CIDR:
 78.254.0.0/16	Free SAS	France cidr France
 88.120.128.0/17	Free SAS	France cidr France,Mandelieu-la-Napoule
 ```
+
+## See PoC on Youtube
 
 [![Preview](https://img.youtube.com/vi/3SKR2KtgTGU/0.jpg)](https://youtu.be/3SKR2KtgTGU)
