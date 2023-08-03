@@ -8,6 +8,7 @@
 	- [Requirements](#requirements)
 	- [Installation](#installation)
 	- [Troubleshooting](#troubleshooting)
+	- [Responsible Use](#responsible-use)
 
 ## Introduction
 The Freebox Port Scanner and Exploiter is a powerful tool designed to scan for Freebox routers on a network and identify those with open ports susceptible to exploitation. The Freebox is a popular router model used in many homes and offices, and while it provides essential networking features, it may have certain vulnerabilities that can be exploited if not properly secured.
@@ -41,6 +42,14 @@ If you encounter any issues while using the Binary Dropper, try the following tr
 
 If the problem persists, feel free to open an issue on the GitHub repository for support.
 
+## Responsible Use
+
+It is essential to use the Freebox Port Scanner and Exploiter responsibly and ethically. Unauthorized use against systems you do not own or have explicit permission to scan is illegal and may result in severe legal consequences. Always ensure you have proper authorization and consent before using this tool on any network.
+
+Remember, the goal is not to cause harm but to raise awareness about potential security risks. If you discover vulnerabilities or open ports on your own Freebox router, take immediate action to secure your network. If you encounter vulnerabilities on other systems, report them responsibly to the affected parties or follow proper disclosure procedures.
+
+Proceed with caution, act responsibly, and prioritize the security and privacy of others while using this tool.
+
 ```txt
 Free CIDR:
 
@@ -65,3 +74,5 @@ Free CIDR:
 78.254.0.0/16	Free SAS	France cidr France
 88.120.128.0/17	Free SAS	France cidr France,Mandelieu-la-Napoule
 ```
+
+[![Preview](https://img.youtube.com/vi/3SKR2KtgTGU/0.jpg)](https://youtu.be/3SKR2KtgTGU)
