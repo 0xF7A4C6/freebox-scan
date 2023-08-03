@@ -9,6 +9,7 @@ require (
 )
 
 require (
+	github.com/0xF7A4C6/GoCycle v0.0.0-20230623065856-dd8a5a180c87 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/dlclark/regexp2 v1.7.0 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
@@ -20,6 +21,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/term v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect

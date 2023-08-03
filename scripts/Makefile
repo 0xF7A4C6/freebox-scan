@@ -1,13 +1,17 @@
-.PHONY: run build
+.PHONY: scan brute build
 
 all:
 	cls||clear
-	@echo "Specify a target: run, build"
+	@echo "Specify a target: scan, brute, build"
 
 build:
 	cls||clear
 	cd ../cmd/freebruter && go build -o ../../scripts/
 
-run:
+scan:
 	cls||clear
-	cd ../cmd/freebruter && go run .
+	cd ../cmd/freebruter && go run . scan
+
+brute:
+	cls||clear
+	cd ../cmd/freebruter && go run . brute

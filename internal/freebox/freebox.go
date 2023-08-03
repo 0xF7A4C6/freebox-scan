@@ -12,9 +12,12 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-func NewFreeboxClient(address string) *Client {
+
+func NewFreeboxClient(address string, Dial fasthttp.DialFunc) *Client {
 	c := Client{
-		http:    &fasthttp.Client{},
+		http:    &fasthttp.Client{
+			Dial: Dial,
+		},
 		address: address,
 		vm:      goja.New(),
 		headers: map[string]string{},
